@@ -1,3 +1,13 @@
 spring:
   application:
     name: "api-gateway"
+
+server:
+  port: 9211
+
+# Enable Eureka Service Discovery
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:9111/eureka}
+
