@@ -5,16 +5,49 @@ spring:
     gateway:
       discovery:
         locator:
-#          enabled: true # Automatic API Gateway Routing
+          enabled: true # Automatic API Gateway Routing
           lower-case-service-id: true
+
+      # Manual/Custom API Gateway Routing. Note: We can enable automatic/custom both at the same time
       routes:
-        id: books-service-ping
-        uri: lb://books-service
-        predicates:
-          - Path=/api/books/ping
-          - Method=GET
-        filters:
-          - RemoveRequestHeader=Cookie # As REST APIs use JWT, and not cookies
+        # User microservice
+        - id: user-service-ping
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/ping
+            - Method=GET
+          filters:
+            - RemoveRequestHeader=Cookie
+        - id: user-service-register
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users
+            - Method=POST
+          filters:
+            - RemoveRequestHeader=Cookie
+        - id: user-service-login
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/login
+            - Method=POST
+          filters:
+            - RemoveRequestHeader=Cookie
+        - id: user-service-swagger
+          uri: lb://user-service
+          predicates:
+            - Path=/swagger-ui/**, /v3/api-docs/**, /swagger-resources/**, /webjars/**, /configuration/ui/**
+          filters:
+            - RemoveRequestHeader=Cookie
+
+        # Books microservice
+        - id: books-service-ping
+          uri: lb://books-service
+          predicates:
+            - Path=/api/books/ping
+            - Method=GET
+          filters:
+            - RemoveRequestHeader=Cookie # As REST APIs use JWT, and not cookies
+
 server:
   port: 9211
 
