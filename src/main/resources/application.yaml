@@ -5,8 +5,16 @@ spring:
     gateway:
       discovery:
         locator:
-          enabled: true
+#          enabled: true # Automatic API Gateway Routing
           lower-case-service-id: true
+      routes:
+        id: books-service-ping
+        uri: lb://books-service
+        predicates:
+          - Path=/api/books/ping
+          - Method=GET
+        filters:
+          - RemoveRequestHeader=Cookie # As REST APIs use JWT, and not cookies
 server:
   port: 9211
 
@@ -14,5 +22,39 @@ server:
 eureka:
   client:
     serviceUrl:
-      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:9111/eureka}
+      defaultZone: "${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://localhost:9111/eureka}"
+
+# Actuator Config
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, beans, gateway, env, metrics, auditevents, httptrace, loggers, threaddump
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+  info:
+    env:
+      enabled: true
+    build:
+      enabled: true
+    git:
+      enabled: true
+      mode: full
+    java:
+      enabled: true
+    os:
+      enabled: true
+
+info:
+  app:
+    name: "${spring.application.name}"
+      #description: "Example Books microservice"
+      #version: "1.0.0"
+      #author: "Srikanth"
+      #docs: "http://skakumanu.dev"
+
+
 
