@@ -18,17 +18,17 @@ spring:
             - Method=GET
           filters:
             - RemoveRequestHeader=Cookie
-        - id: user-service-register
+        - id: user-service-signup
           uri: lb://user-service
           predicates:
-            - Path=/api/users
+            - Path=/api/users/signup
             - Method=POST
           filters:
             - RemoveRequestHeader=Cookie
-        - id: user-service-login
+        - id: user-service-signin
           uri: lb://user-service
           predicates:
-            - Path=/api/users/login
+            - Path=/api/users/signin
             - Method=POST
           filters:
             - RemoveRequestHeader=Cookie
