@@ -3,21 +3,26 @@ spring:
     name: "api-gateway"
   cloud:
     gateway:
-      discovery:
-        locator:
-          enabled: true # Automatic API Gateway Routing
-          lower-case-service-id: true
+#      discovery:
+#        locator:
+#          enabled: true # Automatic API Gateway Routing
+#          lower-case-service-id: true
 
-      # Manual/Custom API Gateway Routing. Note: We can enable automatic/custom both at the same time
-      routes:
+      # Manual/Custom API Gateway Routing.
+      # Note: We can enable automatic/custom both at the same time
+
         # User microservice
         - id: user-service-ping
           uri: lb://user-service
           predicates:
             - Path=/api/users/ping
             - Method=GET
+            - Header=Authorization, Bearer (.*)
           filters:
             - RemoveRequestHeader=Cookie
+            - AuthorizationHeaderFilter
+#            - RewritePath=/user-service/(?<segment>.*) /${segment}
+
         - id: user-service-signup
           uri: lb://user-service
           predicates:
@@ -25,6 +30,7 @@ spring:
             - Method=POST
           filters:
             - RemoveRequestHeader=Cookie
+
         - id: user-service-signin
           uri: lb://user-service
           predicates:
@@ -32,12 +38,35 @@ spring:
             - Method=POST
           filters:
             - RemoveRequestHeader=Cookie
+
+#        - id: user-service-all-other-user-uris
+#          uri: lb://user-service
+#          predicates:
+#            - Path=/api/users
+#            - Method=POST, GET, PUT, DELETE, PATCH
+#            - Header=Authorization, Bearer (.*)
+#          filters:
+#            - RemoveRequestHeader=Cookie
+#            - AuthorizationHeaderFilter
+#
+#        - id: user-service-all-other-role-uris
+#          uri: lb://user-service
+#          predicates:
+#            - Path=/api/users/roles/**
+#            - Method=POST, GET, PUT, DELETE, PATCH
+#            - Header=Authorization, Bearer (.*)
+#          filters:
+#            - RemoveRequestHeader=Cookie
+#            - AuthorizationHeaderFilter
+
         - id: user-service-swagger
           uri: lb://user-service
           predicates:
             - Path=/swagger-ui/**, /v3/api-docs/**, /swagger-resources/**, /webjars/**, /configuration/ui/**
+            - Header=Authorization, Bearer (.*)
           filters:
             - RemoveRequestHeader=Cookie
+            - AuthorizationHeaderFilter
 
         # Books microservice
         - id: books-service-ping
@@ -48,6 +77,19 @@ spring:
           filters:
             - RemoveRequestHeader=Cookie # As REST APIs use JWT, and not cookies
 
+    # Gateway Metrics
+    # To enable Gateway metrics, add spring-boot-starter-actuator as
+    # a project dependency. Then, by default, the Gateway Metrics
+    # Filter runs as long as the property
+    # spring.cloud.gateway.metrics.enabled is not set to false.
+    # This filter adds a timer metric named "gateway.requests".
+    # These metrics are then available to be scraped from
+    # /actuator/metrics/gateway.requests and can be easily integrated
+    # with Prometheus to create a Grafana dashboard.
+    # https://cloud.spring.io/spring-cloud-gateway/2.1.x/multi/multi__global_filters.html:
+#    metrics:
+#      enabled: false
+
 server:
   port: 9211
 
@@ -56,6 +98,22 @@ eureka:
   client:
     serviceUrl:
       defaultZone: "${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://localhost:9111/eureka}"
+
+# Logging Config
+logging:
+  level:
+    root: ${ROOT_LOG_LEVEL:info}
+  pattern:
+    level: "${LOG_PATTERN_CONSOLE:%green(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %blue(-%5level) %red([%thread]) %magenta(---){faint} %yellow(%logger{15}) - %msg%n}"
+#    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
+#  file:
+#    name: logs/api-gateway.log
+#    max-size: 10MB
+#    max-history: 10
+#  org.springframework:
+#    web:
+#      filter:
+#        CommonsRequestLoggingFilter: DEBUG
 
 # Actuator Config
 management:

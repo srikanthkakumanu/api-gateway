@@ -22,16 +22,28 @@ repositories {
 
 ext {
 	set('springCloudVersion', "2024.0.0")
+	jwtApiVersion = '0.12.6'
+	lombokVersion = '1.18.34'
 }
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+//	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
 	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'io.projectreactor:reactor-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	compileOnly "org.projectlombok:lombok:${lombokVersion}"
+	annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+	// Security - JWT
+	implementation "io.jsonwebtoken:jjwt-api:${jwtApiVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-impl:${jwtApiVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jwtApiVersion}"
+
 }
 
 dependencyManagement {
