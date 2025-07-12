@@ -1,5 +1,4 @@
 spring:
-  profiles.active: ${SPRING_ACTIVE_PROFILE:dev}
   application:
     name: "api-gateway"
   cloud:
