@@ -4,79 +4,111 @@ spring:
     name: "api-gateway"
   cloud:
     gateway:
-#      discovery:
-#        locator:
-#          enabled: true # Automatic API Gateway Routing
-#          lower-case-service-id: true
+      #      discovery:
+      #        locator:
+      #          enabled: true # Automatic API Gateway Routing
+      #          lower-case-service-id: true
 
       # Manual/Custom API Gateway Routing.
       # Note: We can enable automatic/custom both at the same time
 
-        # User microservice
-        - id: user-service-ping
-          uri: lb://user-service
-          predicates:
-            - Path=/api/users/ping
-            - Method=GET
-            - Header=Authorization, Bearer (.*)
-          filters:
-            - RemoveRequestHeader=Cookie
-            - AuthorizationHeaderFilter
-#            - RewritePath=/user-service/(?<segment>.*) /${segment}
+      # User microservice
+      - id: user-service-ping
+        uri: lb://user-service
+        predicates:
+          - Path=/api/users/ping
+          - Method=GET
+          - Header=Authorization, Bearer (.*)
+        filters:
+          - RemoveRequestHeader=Cookie
+          - AuthorizationHeaderFilter
+      #            - RewritePath=/user-service/(?<segment>.*) /${segment}
 
-        - id: user-service-signup
-          uri: lb://user-service
-          predicates:
-            - Path=/api/users/signup
-            - Method=POST
-          filters:
-            - RemoveRequestHeader=Cookie
+      - id: user-service-signup
+        uri: lb://user-service
+        predicates:
+          - Path=/api/users/signup
+          - Method=POST
+        filters:
+          - RemoveRequestHeader=Cookie
 
-        - id: user-service-signin
-          uri: lb://user-service
-          predicates:
-            - Path=/api/users/signin
-            - Method=POST
-          filters:
-            - RemoveRequestHeader=Cookie
+      - id: user-service-signin
+        uri: lb://user-service
+        predicates:
+          - Path=/api/users/signin
+          - Method=POST
+        filters:
+          - RemoveRequestHeader=Cookie
 
-#        - id: user-service-all-other-user-uris
-#          uri: lb://user-service
-#          predicates:
-#            - Path=/api/users
-#            - Method=POST, GET, PUT, DELETE, PATCH
-#            - Header=Authorization, Bearer (.*)
-#          filters:
-#            - RemoveRequestHeader=Cookie
-#            - AuthorizationHeaderFilter
-#
-#        - id: user-service-all-other-role-uris
-#          uri: lb://user-service
-#          predicates:
-#            - Path=/api/users/roles/**
-#            - Method=POST, GET, PUT, DELETE, PATCH
-#            - Header=Authorization, Bearer (.*)
-#          filters:
-#            - RemoveRequestHeader=Cookie
-#            - AuthorizationHeaderFilter
+      #        - id: user-service-all-other-user-uris
+      #          uri: lb://user-service
+      #          predicates:
+      #            - Path=/api/users
+      #            - Method=POST, GET, PUT, DELETE, PATCH
+      #            - Header=Authorization, Bearer (.*)
+      #          filters:
+      #            - RemoveRequestHeader=Cookie
+      #            - AuthorizationHeaderFilter
+      #
+      #        - id: user-service-all-other-role-uris
+      #          uri: lb://user-service
+      #          predicates:
+      #            - Path=/api/users/roles/**
+      #            - Method=POST, GET, PUT, DELETE, PATCH
+      #            - Header=Authorization, Bearer (.*)
+      #          filters:
+      #            - RemoveRequestHeader=Cookie
+      #            - AuthorizationHeaderFilter
 
-        - id: user-service-swagger
-          uri: lb://user-service
-          predicates:
-            - Path=/swagger-ui/**, /v3/api-docs/**, /swagger-resources/**, /webjars/**, /configuration/ui/**
-            - Header=Authorization, Bearer (.*)
-          filters:
-            - RemoveRequestHeader=Cookie
-            - AuthorizationHeaderFilter
+      - id: user-service-swagger
+        uri: lb://user-service
+        predicates:
+          - Path=/swagger-ui/**, /v3/api-docs/**, /swagger-resources/**, /webjars/**, /configuration/ui/**
+          - Header=Authorization, Bearer (.*)
+        filters:
+          - RemoveRequestHeader=Cookie
+          - AuthorizationHeaderFilter
 
-        # Books microservice
-        - id: books-service-ping
-          uri: lb://books-service
-          predicates:
-            - Path=/api/books/ping
-            - Method=GET
-          filters:
-            - RemoveRequestHeader=Cookie # As REST APIs use JWT, and not cookies
+      # Books microservice
+      - id: books-service-ping
+        uri: lb://books-service
+        predicates:
+          - Path=/api/books/ping
+          - Method=GET
+          - Header=Authorization, Bearer (.*)
+        filters:
+          - RemoveRequestHeader=Cookie # As REST APIs use JWT, and not cookies
+          - AuthorizationHeaderFilter
+      #            - RewritePath=/user-service/(?<segment>.*) /${segment}
+
+      - id: books-service-all-other-books-uris
+        uri: lb://books-service
+        predicates:
+          - Path=/api/books
+          - Method=POST, GET, PUT, DELETE, PATCH
+          - Header=Authorization, Bearer (.*)
+        filters:
+          - RemoveRequestHeader=Cookie
+          - AuthorizationHeaderFilter
+
+      - id: books-service-all-other-authors-uris
+        uri: lb://books-service
+        predicates:
+          - Path=/api/authors
+          - Method=POST, GET, PUT, DELETE, PATCH
+          - Header=Authorization, Bearer (.*)
+        filters:
+          - RemoveRequestHeader=Cookie
+          - AuthorizationHeaderFilter
+
+      - id: books-service-swagger
+        uri: lb://books-service
+        predicates:
+          - Path=/swagger-ui/**, /v3/api-docs/**, /swagger-resources/**, /webjars/**, /configuration/ui/**
+          - Header=Authorization, Bearer (.*)
+        filters:
+          - RemoveRequestHeader=Cookie
+          - AuthorizationHeaderFilter
 
     # Gateway Metrics
     # To enable Gateway metrics, add spring-boot-starter-actuator as
@@ -146,7 +178,7 @@ info:
       #description: "Example Books microservice"
       #version: "1.0.0"
       #author: "Srikanth"
-      #docs: "http://skakumanu.dev"
+    #docs: "http://skakumanu.dev"
 
 
 

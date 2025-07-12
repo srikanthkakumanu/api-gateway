@@ -74,8 +74,40 @@ spring:
           predicates:
             - Path=/api/books/ping
             - Method=GET
+            - Header=Authorization, Bearer (.*)
           filters:
             - RemoveRequestHeader=Cookie # As REST APIs use JWT, and not cookies
+            - AuthorizationHeaderFilter
+#            - RewritePath=/user-service/(?<segment>.*) /${segment}
+
+        - id: books-service-all-other-books-uris
+          uri: lb://books-service
+          predicates:
+            - Path=/api/books
+            - Method=POST, GET, PUT, DELETE, PATCH
+            - Header=Authorization, Bearer (.*)
+          filters:
+            - RemoveRequestHeader=Cookie
+            - AuthorizationHeaderFilter
+
+        - id: books-service-all-other-authors-uris
+          uri: lb://books-service
+          predicates:
+            - Path=/api/authors
+            - Method=POST, GET, PUT, DELETE, PATCH
+            - Header=Authorization, Bearer (.*)
+          filters:
+            - RemoveRequestHeader=Cookie
+            - AuthorizationHeaderFilter
+
+        - id: books-service-swagger
+          uri: lb://books-service
+          predicates:
+            - Path=/swagger-ui/**, /v3/api-docs/**, /swagger-resources/**, /webjars/**, /configuration/ui/**
+            - Header=Authorization, Bearer (.*)
+          filters:
+            - RemoveRequestHeader=Cookie
+            - AuthorizationHeaderFilter
 
     # Gateway Metrics
     # To enable Gateway metrics, add spring-boot-starter-actuator as
