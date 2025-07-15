@@ -1,8 +1,20 @@
 spring:
   profiles.active: ${SPRING_ACTIVE_PROFILE:dev}
   application:
-    name: "api-gateway"
+    name: ${SPRING_APP_NAME:api-gateway}
   cloud:
+    # Vault Configuration
+    vault:
+      host: ${VAULT_HOST:localhost}
+      port: ${VAULT_PORT:8200}
+      scheme: http
+      authentication: TOKEN
+      token: ${VAULT_TOKEN:srikanth}
+      kv:
+        enabled: true
+        backend: secret
+        profile-separator: /
+
     gateway:
       #      discovery:
       #        locator:
@@ -124,20 +136,20 @@ spring:
 #      enabled: false
 
 server:
-  port: 9211
+  port: ${SERVER_PORT:9211}
 
 # Enable Eureka Service Discovery
 eureka:
   client:
     serviceUrl:
-      defaultZone: "${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://localhost:9111/eureka}"
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://localhost:9111/eureka}
 
 # Logging Config
 logging:
   level:
     root: ${ROOT_LOG_LEVEL:info}
   pattern:
-    level: "${LOG_PATTERN_CONSOLE:%green(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %blue(-%5level) %red([%thread]) %magenta(---){faint} %yellow(%logger{15}) - %msg%n}"
+    level: ${LOG_PATTERN_CONSOLE:%green(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %blue(-%5level) %red([%thread]) %magenta(---){faint} %yellow(%logger{15}) - %msg%n}
 #    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
 #  file:
 #    name: logs/api-gateway.log
@@ -174,7 +186,7 @@ management:
 
 info:
   app:
-    name: "${spring.application.name}"
+    name: ${spring.application.name}
       #description: "Example Books microservice"
       #version: "1.0.0"
       #author: "Srikanth"
