@@ -2,6 +2,14 @@ spring:
   profiles.active: ${SPRING_ACTIVE_PROFILE:dev}
   application:
     name: ${SPRING_APP_NAME:api-gateway}
+
+
+  # Use the modern 'spring.config.import' to declaratively load secrets from Vault.
+  # This is cleaner and more powerful than the old property-based approach.
+  config:
+    import:
+      - vault://secret/data/api/keys/dev
+
   cloud:
     # Vault Configuration
     vault:
@@ -14,6 +22,13 @@ spring:
         enabled: true
         backend: secret
         profile-separator: /
+      # Enable retry for connecting to Vault on startup. This is crucial for handling
+      # the race condition where the application starts before Vault is ready.
+      config:
+        retry:
+          enabled: true
+          max-attempts: 15
+          initial-interval: 2000 # 2 seconds
 
     gateway:
       #      discovery:
@@ -137,6 +152,9 @@ spring:
 
 server:
   port: ${SERVER_PORT:9211}
+
+api-key: ${api-key}
+key-secret: ${key-secret}
 
 # Enable Eureka Service Discovery
 eureka:

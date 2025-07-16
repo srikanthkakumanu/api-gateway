@@ -6,6 +6,8 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpHeaders;
@@ -24,11 +26,13 @@ import java.util.Objects;
 @Slf4j
 public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<AuthorizationHeaderFilter.Config> {
 
-    private static final String secret = "Secret123@@321terceSSecret123@@321terceS@321terceS";
-    private final SecretKey secretKey =
-            Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    private final SecretKey secretKey;
 
-    public AuthorizationHeaderFilter() { super(Config.class); }
+    @Autowired
+    public AuthorizationHeaderFilter(@Value("${key-secret}") String secret) {
+            super(Config.class);
+            this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+}
 
     @Override
     public GatewayFilter apply(Config config) {
