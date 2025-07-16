@@ -57,7 +57,7 @@ bootJar {
 	archiveFileName = "${project.group}" + "-" + "${project.version}" + ".jar"
 }
 
-tasks.named('test') {
+test {
 	useJUnitPlatform()
 
 	testLogging {
@@ -72,3 +72,4 @@ tasks.named('test') {
 		showStandardStreams = false
 	}
 }
+
