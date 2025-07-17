@@ -29,7 +29,7 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
     private final SecretKey secretKey;
 
     @Autowired
-    public AuthorizationHeaderFilter(@Value("${key-secret}") String secret) {
+    public AuthorizationHeaderFilter(@Value("${jwt-secret}") String secret) {
             super(Config.class);
             this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
 }

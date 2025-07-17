@@ -154,7 +154,7 @@ server:
   port: ${SERVER_PORT:9211}
 
 api-key: ${api-key}
-key-secret: ${key-secret}
+jwt-secret: ${key-secret}
 
 # Enable Eureka Service Discovery
 eureka:
