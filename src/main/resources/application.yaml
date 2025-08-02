@@ -10,6 +10,10 @@ spring:
     import:
       - vault://secret/data/api/keys/dev
 
+  threads:
+    virtual:
+      enabled: true
+
   cloud:
     # Vault Configuration
     vault:
@@ -67,25 +71,25 @@ spring:
         filters:
           - RemoveRequestHeader=Cookie
 
-      #        - id: user-service-all-other-user-uris
-      #          uri: lb://user-service
-      #          predicates:
-      #            - Path=/api/users
-      #            - Method=POST, GET, PUT, DELETE, PATCH
-      #            - Header=Authorization, Bearer (.*)
-      #          filters:
-      #            - RemoveRequestHeader=Cookie
-      #            - AuthorizationHeaderFilter
-      #
-      #        - id: user-service-all-other-role-uris
-      #          uri: lb://user-service
-      #          predicates:
-      #            - Path=/api/users/roles/**
-      #            - Method=POST, GET, PUT, DELETE, PATCH
-      #            - Header=Authorization, Bearer (.*)
-      #          filters:
-      #            - RemoveRequestHeader=Cookie
-      #            - AuthorizationHeaderFilter
+      - id: user-service-all-other-user-uris
+        uri: lb://user-service
+        predicates:
+          - Path=/api/users
+          - Method=POST, GET, PUT, DELETE, PATCH
+          - Header=Authorization, Bearer (.*)
+        filters:
+          - RemoveRequestHeader=Cookie
+          - AuthorizationHeaderFilter
+
+      - id: user-service-all-other-role-uris
+        uri: lb://user-service
+        predicates:
+          - Path=/api/users/roles/**
+          - Method=POST, GET, PUT, DELETE, PATCH
+          - Header=Authorization, Bearer (.*)
+        filters:
+          - RemoveRequestHeader=Cookie
+          - AuthorizationHeaderFilter
 
       - id: user-service-swagger
         uri: lb://user-service
@@ -160,7 +164,7 @@ jwt-secret: ${key-secret}
 eureka:
   client:
     serviceUrl:
-      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://localhost:9111/eureka}
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://eureka-discovery-service:9111/eureka}
 
 # Logging Config
 logging:
@@ -205,10 +209,10 @@ management:
 info:
   app:
     name: ${spring.application.name}
-      #description: "Example Books microservice"
-      #version: "1.0.0"
-      #author: "Srikanth"
-    #docs: "http://skakumanu.dev"
+    description: "Example Books microservice"
+    version: "1.0.0"
+    author: "Srikanth"
+    docs: "http://skakumanu.dev"
 
 
 

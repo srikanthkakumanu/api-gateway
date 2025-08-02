@@ -9,6 +9,10 @@ spring:
     import:
       - vault://secret/data/api/keys/qa
 
+  threads:
+    virtual:
+      enabled: true
+
   cloud:
     # Vault Configuration
     vault:
@@ -159,7 +163,7 @@ jwt-secret: ${key-secret}
 eureka:
   client:
     serviceUrl:
-      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://localhost:9111/eureka}
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://eureka-discovery-service:9111/eureka}
 
 # Logging Config
 logging:
@@ -204,10 +208,10 @@ management:
 info:
   app:
     name: ${spring.application.name}
-      #description: "Example Books microservice"
-    #version: "1.0.0"
-    #author: "Srikanth"
-    #docs: "http://skakumanu.dev"
+    description: "Example Books microservice"
+    version: "1.0.0"
+    author: "Srikanth"
+    docs: "http://skakumanu.dev"
 
 
 
