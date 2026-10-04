@@ -26,6 +26,11 @@ spring:
             - RemoveRequestHeader=X-Forwarded-User
             - RemoveRequestHeader=X-Internal-User
           routes:
+            - id: reviews-service-api
+              uri: ${REVIEWS_SERVICE_URI:http://localhost:9171}
+              predicates:
+                - Path=/api/v1/reviews,/api/v1/reviews/**
+
             - id: user-service-health
               uri: ${USER_SERVICE_URI:lb://user-service}
               predicates:
@@ -67,7 +72,7 @@ eureka:
   client:
     enabled: ${EUREKA_ENABLED:false}
     serviceUrl:
-      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://localhost:8761/eureka}
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://localhost:9111/eureka}
 
 logging:
   level:
