@@ -15,6 +15,7 @@ HTTP: `9211` (`SERVER_PORT` override). Keycloak issuer defaults to `http://local
 | Setting | Default / purpose |
 | --- | --- |
 | `USER_SERVICE_URI` | `lb://user-service` |
+| `REVIEWS_SERVICE_URI` | `http://localhost:9171`; shared Compose overrides it |
 | `AUTH_SERVICE_URI` | `lb://auth-service` |
 | `KEYCLOAK_ISSUER_URI` | Exact issuer matching token `iss` |
 | `EUREKA_ENABLED` | False; enable for `lb://` routes |
@@ -27,6 +28,7 @@ There are no Config Client or Vault dependencies in this build. Supply environme
 
 | Route | Forwarded target / behavior |
 | --- | --- |
+| `/api/v1/reviews`, `/api/v1/reviews/**` | Reviews Service; bearer token and path preserved |
 | `GET /api/users/ping` | User Service public connectivity |
 | `/api/users/**` | User Service; path preserved |
 | `/user-service/v3/api-docs`, `/user-service/api-docs`, `/user-service/swagger-ui/**` | User docs; service prefix stripped |
