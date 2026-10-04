@@ -3,191 +3,85 @@ spring:
   application:
     name: ${SPRING_APP_NAME:api-gateway}
 
-
-  # Use the modern 'spring.config.import' to declaratively load secrets from Vault.
-  # This is cleaner and more powerful than the old property-based approach.
-  config:
-    import:
-      - vault://secret/data/api/keys/dev
-
   threads:
     virtual:
       enabled: true
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/company-platform}
+
   cloud:
-    # Vault Configuration
-    vault:
-      host: ${VAULT_HOST:localhost}
-      port: ${VAULT_PORT:8200}
-      scheme: http
-      authentication: TOKEN
-      token: ${VAULT_TOKEN:srikanth}
-      kv:
-        enabled: true
-        backend: secret
-        profile-separator: /
-      # Enable retry for connecting to Vault on startup. This is crucial for handling
-      # the race condition where the application starts before Vault is ready.
-      config:
-        retry:
-          enabled: true
-          max-attempts: 15
-          initial-interval: 2000 # 2 seconds
-
     gateway:
-      #      discovery:
-      #        locator:
-      #          enabled: true # Automatic API Gateway Routing
-      #          lower-case-service-id: true
+      server:
+        webflux:
+          httpclient:
+            connect-timeout: 2000
+            response-timeout: 5s
+          default-filters:
+            - RemoveRequestHeader=Cookie
+            - RemoveRequestHeader=X-User-Id
+            - RemoveRequestHeader=X-Forwarded-User
+            - RemoveRequestHeader=X-Internal-User
+          routes:
+            - id: user-service-health
+              uri: ${USER_SERVICE_URI:lb://user-service}
+              predicates:
+                - Path=/api/users/ping
+                - Method=GET
 
-      # Manual/Custom API Gateway Routing.
-      # Note: We can enable automatic/custom both at the same time
+            - id: user-service-api
+              uri: ${USER_SERVICE_URI:lb://user-service}
+              predicates:
+                - Path=/api/users/**
+              filters:
+                - PreserveHostHeader
 
-      # User microservice
-      - id: user-service-ping
-        uri: lb://user-service
-        predicates:
-          - Path=/api/users/ping
-          - Method=GET
-          - Header=Authorization, Bearer (.*)
-        filters:
-          - RemoveRequestHeader=Cookie
-          - AuthorizationHeaderFilter
-      #            - RewritePath=/user-service/(?<segment>.*) /${segment}
+            - id: user-service-openapi
+              uri: ${USER_SERVICE_URI:lb://user-service}
+              predicates:
+                - Path=/user-service/v3/api-docs,/user-service/api-docs,/user-service/swagger-ui/**
+              filters:
+                - RewritePath=/user-service/(?<segment>.*), /${segment}
 
-      - id: user-service-signup
-        uri: lb://user-service
-        predicates:
-          - Path=/api/users/signup
-          - Method=POST
-        filters:
-          - RemoveRequestHeader=Cookie
+            - id: auth-service-api
+              uri: ${AUTH_SERVICE_URI:lb://auth-service}
+              predicates:
+                - Path=/api/roles/**,/api/permissions/**
+              filters:
+                - PreserveHostHeader
 
-      - id: user-service-signin
-        uri: lb://user-service
-        predicates:
-          - Path=/api/users/signin
-          - Method=POST
-        filters:
-          - RemoveRequestHeader=Cookie
-
-      - id: user-service-all-other-user-uris
-        uri: lb://user-service
-        predicates:
-          - Path=/api/users
-          - Method=POST, GET, PUT, DELETE, PATCH
-          - Header=Authorization, Bearer (.*)
-        filters:
-          - RemoveRequestHeader=Cookie
-          - AuthorizationHeaderFilter
-
-      - id: user-service-all-other-role-uris
-        uri: lb://user-service
-        predicates:
-          - Path=/api/users/roles/**
-          - Method=POST, GET, PUT, DELETE, PATCH
-          - Header=Authorization, Bearer (.*)
-        filters:
-          - RemoveRequestHeader=Cookie
-          - AuthorizationHeaderFilter
-
-      - id: user-service-swagger
-        uri: lb://user-service
-        predicates:
-          - Path=/swagger-ui/**, /v3/api-docs/**, /swagger-resources/**, /webjars/**, /configuration/ui/**
-          - Header=Authorization, Bearer (.*)
-        filters:
-          - RemoveRequestHeader=Cookie
-          - AuthorizationHeaderFilter
-
-      # Books microservice
-      - id: books-service-ping
-        uri: lb://books-service
-        predicates:
-          - Path=/api/books/ping
-          - Method=GET
-          - Header=Authorization, Bearer (.*)
-        filters:
-          - RemoveRequestHeader=Cookie # As REST APIs use JWT, and not cookies
-          - AuthorizationHeaderFilter
-      #            - RewritePath=/user-service/(?<segment>.*) /${segment}
-
-      - id: books-service-all-other-books-uris
-        uri: lb://books-service
-        predicates:
-          - Path=/api/books
-          - Method=POST, GET, PUT, DELETE, PATCH
-          - Header=Authorization, Bearer (.*)
-        filters:
-          - RemoveRequestHeader=Cookie
-          - AuthorizationHeaderFilter
-
-      - id: books-service-all-other-authors-uris
-        uri: lb://books-service
-        predicates:
-          - Path=/api/authors
-          - Method=POST, GET, PUT, DELETE, PATCH
-          - Header=Authorization, Bearer (.*)
-        filters:
-          - RemoveRequestHeader=Cookie
-          - AuthorizationHeaderFilter
-
-      - id: books-service-swagger
-        uri: lb://books-service
-        predicates:
-          - Path=/swagger-ui/**, /v3/api-docs/**, /swagger-resources/**, /webjars/**, /configuration/ui/**
-          - Header=Authorization, Bearer (.*)
-        filters:
-          - RemoveRequestHeader=Cookie
-          - AuthorizationHeaderFilter
-
-    # Gateway Metrics
-    # To enable Gateway metrics, add spring-boot-starter-actuator as
-    # a project dependency. Then, by default, the Gateway Metrics
-    # Filter runs as long as the property
-    # spring.cloud.gateway.metrics.enabled is not set to false.
-    # This filter adds a timer metric named "gateway.requests".
-    # These metrics are then available to be scraped from
-    # /actuator/metrics/gateway.requests and can be easily integrated
-    # with Prometheus to create a Grafana dashboard.
-    # https://cloud.spring.io/spring-cloud-gateway/2.1.x/multi/multi__global_filters.html:
-#    metrics:
-#      enabled: false
+            - id: auth-service-openapi
+              uri: ${AUTH_SERVICE_URI:lb://auth-service}
+              predicates:
+                - Path=/auth-service/v3/api-docs,/auth-service/api-docs,/auth-service/swagger-ui/**
+              filters:
+                - RewritePath=/auth-service/(?<segment>.*), /${segment}
 
 server:
   port: ${SERVER_PORT:9211}
 
-api-key: ${api-key}
-jwt-secret: ${key-secret}
-
-# Enable Eureka Service Discovery
 eureka:
   client:
+    enabled: ${EUREKA_ENABLED:false}
     serviceUrl:
-      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://eureka-discovery-service:9111/eureka}
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://localhost:8761/eureka}
 
-# Logging Config
 logging:
   level:
     root: ${ROOT_LOG_LEVEL:info}
+    org.springframework.security: ${SPRING_SECURITY_LOG_LEVEL:info}
+    org.springframework.cloud.gateway: ${SPRING_CLOUD_GATEWAY_LOG_LEVEL:info}
   pattern:
     level: ${LOG_PATTERN_CONSOLE:%green(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %blue(-%5level) %red([%thread]) %magenta(---){faint} %yellow(%logger{15}) - %msg%n}
-#    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
-#  file:
-#    name: logs/api-gateway.log
-#    max-size: 10MB
-#    max-history: 10
-#  org.springframework:
-#    web:
-#      filter:
-#        CommonsRequestLoggingFilter: DEBUG
 
-# Actuator Config
 management:
   endpoints:
     web:
       exposure:
-        include: health, info, beans, gateway, env, metrics, auditevents, httptrace, loggers, threaddump
+        include: health,info,gateway,metrics,prometheus,loggers,threaddump
   endpoint:
     health:
       show-details: always
@@ -209,10 +103,4 @@ management:
 info:
   app:
     name: ${spring.application.name}
-    description: "Example Books microservice"
-    version: "1.0.0"
-    author: "Srikanth"
-    docs: "http://skakumanu.dev"
-
-
-
+    description: "Keycloak-secured API gateway"

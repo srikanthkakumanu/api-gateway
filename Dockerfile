@@ -1,5 +1,5 @@
 # Stage 1: Builder stage to extract JAR layers
-FROM eclipse-temurin:21-jre-alpine AS builder
+FROM eclipse-temurin:27-jre-alpine AS builder
 LABEL authors="skakumanu"
 
 WORKDIR /application
@@ -16,7 +16,7 @@ COPY ${JAR_FILE_LOCATION}/${JAR_FILE} ./
 RUN java -Djarmode=layertools -jar ${JAR_FILE} extract
 
 # Stage 2: Final runtime image
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:27-jre-alpine
 
 # Create a dedicated, non-root user and group for security
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
