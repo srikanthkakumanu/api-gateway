@@ -31,12 +31,12 @@ Needs Docker. The build tests routing for every path family, public versus prote
 
 ## Configuration
 
-Non-secret settings come from the Config Server (`service-configs/api-gateway*.yml` and `application*.yml`). The gateway needs no secrets.
+Configuration is split by environment: `application.yml` holds what is common, `application-dev.yml`, `-qa.yml` and `-prod.yml` the rest. Further non-secret settings come from the Config Server (`service-configs/api-gateway*.yml` and `application*.yml`, split the same way). The gateway needs no secrets.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
 | `CONFIG_SERVER_URL` | `http://localhost:9311` | Config Server |
-| `SPRING_PROFILES_ACTIVE` | none | `docker` or `k8s` inside those environments |
+| `SPRING_PROFILES_ACTIVE` | `dev` | `dev`, `qa` or `prod`. In `qa` and `prod` the addresses below have no default and must be set. |
 | `SERVER_PORT` | `9211` | HTTP port |
 
 `platform.gateway.cors.allowed-origins` lists the frontends allowed to call it (`http://localhost:3000` and `:5173` by default).
