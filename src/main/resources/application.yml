@@ -1,9 +1,10 @@
+# Common to every environment. Environment-specific settings are in application-dev.yml,
+# application-qa.yml and application-prod.yml; with no profile set, dev is used.
 spring:
   application:
     name: api-gateway
-  config:
-    import:
-      - optional:configserver:${CONFIG_SERVER_URL:http://localhost:9311}
+  profiles:
+    default: dev
   cloud:
     gateway:
       server:
@@ -79,7 +80,6 @@ server:
 
 platform:
   keycloak:
-    server-url: http://localhost:8080
     realm: platform
   security:
     jwt:
@@ -88,8 +88,6 @@ platform:
     routes:
       user-service: lb://user-service
       auth-service: lb://auth-service
-    cors:
-      allowed-origins: http://localhost:3000,http://localhost:5173
 
 springdoc:
   swagger-ui:

@@ -1,0 +1,13 @@
+# prod. The config server is required and every address must be supplied; nothing here falls
+# back to a development value.
+spring:
+  config:
+    import:
+      - configserver:${CONFIG_SERVER_URL}
+
+platform:
+  keycloak:
+    server-url: ${KEYCLOAK_URL}
+  gateway:
+    cors:
+      allowed-origins: ${CORS_ALLOWED_ORIGINS}
