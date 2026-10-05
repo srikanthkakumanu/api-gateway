@@ -1,0 +1,56 @@
+plugins {
+	id 'java'
+	alias(libs.plugins.spring.boot)
+	alias(libs.plugins.spring.dependency.management)
+}
+
+group = 'com.gateway'
+version = '1.0.0'
+description = 'Single entry point: JWT validation, routing, correlation IDs and CORS'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(libs.versions.java.get() as int)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencyManagement {
+	imports {
+		mavenBom libs.spring.cloud.dependencies.get().toString()
+	}
+}
+
+dependencies {
+	implementation libs.platform.security.starter
+	implementation 'org.springframework.cloud:spring-cloud-starter-gateway-server-webflux'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-resource-server'
+	implementation 'org.springframework.cloud:spring-cloud-starter-config'
+	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+	implementation libs.springdoc.webflux.ui
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+	testImplementation 'io.projectreactor:reactor-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+bootJar {
+	archiveFileName = 'application.jar'
+}
+
+jar {
+	enabled = false
+}
+
+test {
+	useJUnitPlatform()
+	// Tests configure everything themselves; no config server or registry is involved.
+	systemProperty 'spring.cloud.config.enabled', 'false'
+	systemProperty 'eureka.client.enabled', 'false'
+}

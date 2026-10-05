@@ -1,0 +1,101 @@
+spring:
+  application:
+    name: api-gateway
+  config:
+    import:
+      - optional:configserver:${CONFIG_SERVER_URL:http://localhost:9311}
+  cloud:
+    gateway:
+      server:
+        webflux:
+          httpclient:
+            connect-timeout: 2000
+            response-timeout: 10s
+          default-filters:
+            # Identity comes from the token only; never from headers a caller could set.
+            - RemoveRequestHeader=X-User-Id
+            - RemoveRequestHeader=X-User-Roles
+            - RemoveRequestHeader=X-Forwarded-User
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowed-origins: ${platform.gateway.cors.allowed-origins}
+                allowed-methods: [GET, POST, PUT, DELETE, OPTIONS]
+                allowed-headers: [Authorization, Content-Type, X-Correlation-Id]
+                exposed-headers: [Location, X-Correlation-Id]
+                max-age: 3600
+          # Order matters: the first matching route wins. To add a service, copy a block and
+          # put anything more specific than an existing pattern above it.
+          routes:
+            # Discovery documents, so consumers never need the identity provider's address.
+            - id: oidc-discovery
+              uri: ${platform.keycloak.server-url}
+              predicates:
+                - Path=/api/v1/auth/.well-known/openid-configuration
+                - Method=GET
+              filters:
+                - SetPath=/realms/${platform.keycloak.realm}/.well-known/openid-configuration
+            - id: oidc-jwks
+              uri: ${platform.keycloak.server-url}
+              predicates:
+                - Path=/api/v1/auth/.well-known/jwks.json
+                - Method=GET
+              filters:
+                - SetPath=/realms/${platform.keycloak.realm}/protocol/openid-connect/certs
+
+            # A user's roles, groups and permissions belong to the access context, although the
+            # path starts with /users. Must stay above the user-service route.
+            - id: auth-service-user-access
+              uri: ${platform.gateway.routes.auth-service}
+              predicates:
+                - Path=/api/v1/users/{id}/roles,/api/v1/users/{id}/roles/**,/api/v1/users/{id}/groups,/api/v1/users/{id}/groups/**,/api/v1/users/{id}/permissions
+
+            - id: user-service
+              uri: ${platform.gateway.routes.user-service}
+              predicates:
+                - Path=/api/v1/users,/api/v1/users/**
+
+            - id: auth-service
+              uri: ${platform.gateway.routes.auth-service}
+              predicates:
+                - Path=/api/v1/auth/**,/api/v1/sessions/**,/api/v1/roles,/api/v1/roles/**,/api/v1/groups,/api/v1/groups/**,/api/v1/permissions,/api/v1/permissions/**,/api/v1/authz/**,/api/v1/clients,/api/v1/clients/**,/api/v1/audit/**,/api/v1/tokens/**,/api/v1/token-settings,/api/v1/keys,/api/v1/keys/**,/api/v1/token-claims,/api/v1/token-claims/**
+
+            # OpenAPI documents of the services, shown together in the gateway's Swagger UI.
+            - id: user-service-openapi
+              uri: ${platform.gateway.routes.user-service}
+              predicates:
+                - Path=/docs/user-service/v3/api-docs
+              filters:
+                - SetPath=/v3/api-docs
+            - id: auth-service-openapi
+              uri: ${platform.gateway.routes.auth-service}
+              predicates:
+                - Path=/docs/auth-service/v3/api-docs
+              filters:
+                - SetPath=/v3/api-docs
+
+server:
+  port: ${SERVER_PORT:9211}
+
+platform:
+  keycloak:
+    server-url: http://localhost:8080
+    realm: platform
+  security:
+    jwt:
+      audience: api-gateway
+  gateway:
+    routes:
+      user-service: lb://user-service
+      auth-service: lb://auth-service
+    cors:
+      allowed-origins: http://localhost:3000,http://localhost:5173
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: user-service
+        url: /docs/user-service/v3/api-docs
+      - name: auth-service
+        url: /docs/auth-service/v3/api-docs
