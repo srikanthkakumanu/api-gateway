@@ -1,1 +1,13 @@
+// Versions and the shared security starter come from the platform root (../micro-services).
+// See micro-services/docs/adr/0003-platform-root-and-shared-build.md.
+dependencyResolutionManagement {
+	versionCatalogs {
+		libs {
+			from(files('../micro-services/gradle/libs.versions.toml'))
+		}
+	}
+}
+
 rootProject.name = 'api-gateway'
+
+includeBuild '../micro-services'
