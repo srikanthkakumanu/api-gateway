@@ -70,6 +70,11 @@ spring:
               predicates:
                 - Path=/api/v1/books,/api/v1/books/**,/api/v1/authors,/api/v1/authors/**
 
+            - id: video-service
+              uri: ${platform.gateway.routes.video-service}
+              predicates:
+                - Path=/api/v1/videos,/api/v1/videos/**
+
             # OpenAPI documents of the services, shown together in the gateway's Swagger UI.
             - id: user-service-openapi
               uri: ${platform.gateway.routes.user-service}
@@ -89,6 +94,12 @@ spring:
                 - Path=/docs/books-service/v3/api-docs
               filters:
                 - SetPath=/v3/api-docs
+            - id: video-service-openapi
+              uri: ${platform.gateway.routes.video-service}
+              predicates:
+                - Path=/docs/video-service/v3/api-docs
+              filters:
+                - SetPath=/v3/api-docs
 
 server:
   port: ${SERVER_PORT:9211}
@@ -106,6 +117,7 @@ platform:
       user-service: lb://user-service
       auth-service: lb://auth-service
       books-service: lb://books-service
+      video-service: lb://video-service
 
 springdoc:
   swagger-ui:
@@ -117,3 +129,5 @@ springdoc:
         url: /docs/auth-service/v3/api-docs
       - name: books-service
         url: /docs/books-service/v3/api-docs
+      - name: video-service
+        url: /docs/video-service/v3/api-docs

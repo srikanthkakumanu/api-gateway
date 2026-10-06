@@ -34,6 +34,7 @@ class GatewayTest {
 	private static final StubService userService = new StubService("user-service");
 	private static final StubService authService = new StubService("auth-service");
 	private static final StubService booksService = new StubService("books-service");
+	private static final StubService videoService = new StubService("video-service");
 	private static final StubService keycloak = new StubService("keycloak");
 
 	@Value("${local.server.port}")
@@ -44,6 +45,7 @@ class GatewayTest {
 		registry.add("platform.gateway.routes.user-service", userService::url);
 		registry.add("platform.gateway.routes.auth-service", authService::url);
 		registry.add("platform.gateway.routes.books-service", booksService::url);
+		registry.add("platform.gateway.routes.video-service", videoService::url);
 		registry.add("platform.keycloak.server-url", keycloak::url);
 		registry.add("platform.security.jwt.issuer-uri", () -> TestIdentityProvider.ISSUER);
 		registry.add("platform.security.jwt.jwk-set-uri", idp::jwkSetUri);
@@ -56,6 +58,7 @@ class GatewayTest {
 		userService.close();
 		authService.close();
 		booksService.close();
+		videoService.close();
 		keycloak.close();
 	}
 
@@ -91,7 +94,11 @@ class GatewayTest {
 			"/api/v1/books/22222222-2222-3333-4444-555555555555, books-service",
 			"/api/v1/books/22222222-2222-3333-4444-555555555555/owner, books-service",
 			"/api/v1/authors, books-service",
-			"/api/v1/authors/22222222-2222-3333-4444-555555555555, books-service" })
+			"/api/v1/authors/22222222-2222-3333-4444-555555555555, books-service",
+			"/api/v1/videos, video-service",
+			"/api/v1/videos/22222222-2222-3333-4444-555555555555, video-service",
+			"/api/v1/videos/22222222-2222-3333-4444-555555555555/complete, video-service",
+			"/api/v1/videos/22222222-2222-3333-4444-555555555555/owner, video-service" })
 	void routesEachPathToTheServiceThatOwnsIt(String path, String service) {
 		client().get().uri(path).headers(headers -> headers.setBearerAuth(idp.validToken())).exchange()
 				.expectStatus().isOk()
@@ -117,7 +124,9 @@ class GatewayTest {
 	void unknownPathsAreNotRouted() {
 		String token = idp.validToken();
 
-		client().get().uri("/api/v1/videos").headers(headers -> headers.setBearerAuth(token)).exchange()
+		client().get().uri("/api/v1/reviews").headers(headers -> headers.setBearerAuth(token)).exchange()
+				.expectStatus().isNotFound();
+		client().get().uri("/api/videos").headers(headers -> headers.setBearerAuth(token)).exchange()
 				.expectStatus().isNotFound();
 		// The old, unversioned catalog paths are gone.
 		client().get().uri("/api/books").headers(headers -> headers.setBearerAuth(token)).exchange()
@@ -139,7 +148,8 @@ class GatewayTest {
 	@ParameterizedTest
 	@ValueSource(strings = { "/api/v1/users", "/api/v1/users/me", "/api/v1/auth/me", "/api/v1/roles",
 			"/api/v1/users/" + USER + "/roles", "/api/v1/keys", "/api/v1/audit/login-events", "/api/v1/books",
-			"/api/v1/books/22222222-2222-3333-4444-555555555555", "/api/v1/authors" })
+			"/api/v1/books/22222222-2222-3333-4444-555555555555", "/api/v1/authors", "/api/v1/videos",
+			"/api/v1/videos/22222222-2222-3333-4444-555555555555" })
 	void everythingElseIsRejectedWithoutATokenBeforeReachingAService(String path) {
 		client().get().uri(path).exchange()
 				.expectStatus().isUnauthorized()
