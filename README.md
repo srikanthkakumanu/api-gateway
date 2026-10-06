@@ -21,14 +21,14 @@ Built on Spring Cloud Gateway (reactive).
 
 | Concern | Behaviour |
 | --- | --- |
-| Routing | By path, to services found through Eureka (`lb://user-service`, `lb://auth-service`) |
+| Routing | By path, to services found through Eureka (`lb://user-service`, `lb://auth-service`, `lb://books-service`) |
 | Authentication | Rejects requests without a valid platform access token, except on the public paths |
 | Token relay | Forwards the `Authorization` header unchanged; services validate it again themselves |
 | Correlation | Adds `X-Correlation-Id` to the request and the response |
 | Header hygiene | Drops caller-supplied identity headers |
 | CORS | Answers preflights for the configured frontends |
 | Discovery documents | Proxies the OIDC discovery document and JWKS, so consumers never need Keycloak's address |
-| API docs | One Swagger UI over both services |
+| API docs | One Swagger UI over the three services |
 
 It does not authorize: permissions are checked by the services. It adds no identity headers, and the services would not trust them.
 
@@ -43,7 +43,8 @@ Defined in `src/main/resources/application.yml`. The first matching route wins, 
 | 3 | `/api/v1/users/{id}/roles`, `/groups/**`, `/permissions` | auth-service |
 | 4 | `/api/v1/users`, `/api/v1/users/**` | user-service |
 | 5 | `/api/v1/auth/**`, `/sessions/**`, `/roles/**`, `/groups/**`, `/permissions/**`, `/authz/**`, `/clients/**`, `/audit/**`, `/tokens/**`, `/token-settings`, `/keys/**`, `/token-claims/**` | auth-service |
-| 6 | `/docs/user-service/v3/api-docs`, `/docs/auth-service/v3/api-docs` | Each service's OpenAPI document |
+| 6 | `/api/v1/books`, `/api/v1/books/**`, `/api/v1/authors`, `/api/v1/authors/**` | books-service |
+| 7 | `/docs/user-service/v3/api-docs`, `/docs/auth-service/v3/api-docs`, `/docs/books-service/v3/api-docs` | Each service's OpenAPI document |
 
 Route 3 must stay above route 4: a user's roles, groups and permissions belong to the access context although the path starts with `/users`. A test checks this for every path family.
 
@@ -104,7 +105,7 @@ More settings come from the Config Server (`service-configs/application*.yml` an
 | `EUREKA_URL` | `http://localhost:9111/eureka/` | Registry |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:3000,http://localhost:5173` | Frontends allowed to call it |
 
-Route targets can be overridden with `platform.gateway.routes.user-service` and `platform.gateway.routes.auth-service` (the tests point them at stubs).
+Route targets can be overridden with `platform.gateway.routes.user-service`, `platform.gateway.routes.auth-service` and `platform.gateway.routes.books-service` (the tests point them at stubs).
 
 ## Run
 
@@ -124,9 +125,9 @@ The gateway reports healthy a few seconds before it has fetched the registry fro
 ./gradlew build
 ```
 
-46 tests, none skipped, no Docker needed. They run the real gateway against stub services and a test issuer whose JWKS is fetched over HTTP:
+54 tests, none skipped, no Docker needed. They run the real gateway against stub services and a test issuer whose JWKS is fetched over HTTP:
 
-- every path family reaches the right service, including the `/users/{id}/roles` ordering
+- every path family reaches the right service, including the `/users/{id}/roles` ordering and the book catalog
 - public paths need no token; everything else is rejected before reaching a service
 - tampered, unsigned, HMAC-signed, unknown-key, expired, not-yet-valid, wrong-issuer, wrong-audience and non-access tokens are rejected
 - the token is relayed, the correlation ID is added or kept, spoofed identity headers are dropped
@@ -134,14 +135,16 @@ The gateway reports healthy a few seconds before it has fetched the registry fro
 
 ## Adding a service
 
-In `application.yml`, copy a route block and point it at `lb://<service-name>`. Put anything more specific than an existing pattern above it.
+`books-service` was added this way. In `application.yml`, copy its route block and point it at the new service, give the target a default under `platform.gateway.routes`, and put anything more specific than an existing pattern above it.
 
 ```yaml
 - id: books-service
-  uri: lb://books-service
+  uri: ${platform.gateway.routes.books-service}      # lb://books-service
   predicates:
-    - Path=/api/v1/books,/api/v1/books/**
+    - Path=/api/v1/books,/api/v1/books/**,/api/v1/authors,/api/v1/authors/**
 ```
+
+The gateway only checks that the caller is logged in. Whether they may use the catalog (a catalog role is required) is decided by books-service from the permissions in the token.
 
 The full onboarding flow is in [Integrating a new service](../micro-services/docs/integrating-a-new-service.md).
 
